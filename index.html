@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>習慣管理アプリ - プレビュー</title>
+    <style>
+        /* プレビュー画面の背景（PCで見やすいように） */
+        body {
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            /* スマホネイティブアプリに近いフォント指定 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* スマホ画面プレビュー枠 (幅375px想定) */
+        .mobile-container {
+            width: 375px;
+            height: 667px;
+            /* 縦幅の目安 */
+            background-color: #ffffff;
+            border-radius: 40px;
+            /* スマホの丸みを表現 */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            /* 浮き出し効果 */
+            border: 8px solid #333;
+            /* スマホのベゼル（縁） */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-sizing: border-box;
+            padding: 24px;
+        }
+
+        /* 中央のテキスト */
+        .goal-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1c1c1e;
+            /* 真っ黒より少し柔らかい文字色 */
+            margin-bottom: 48px;
+            /* ボタンとの余白 */
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* 完了ボタン (高さ60px, グレー) */
+        .complete-btn {
+            width: 85%;
+            /* 画面幅に対して適切な比率 */
+            height: 60px;
+            /* ご指定の高さ */
+            background-color: #8e8e93;
+            /* 洗練されたグレー */
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 30px;
+            /* 完全な角丸（ピルシェイプ） */
+            cursor: pointer;
+            /* 色や形が変化する際のスムーズなアニメーション */
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 12px rgba(142, 142, 147, 0.3);
+            /* テキストを中央配置 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* タップ時のハイライトを無効化 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 押した(タップした)時の沈み込みアニメーション */
+        .complete-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 6px rgba(142, 142, 147, 0.3);
+        }
+
+        /* 達成済み状態 (オレンジ) */
+        .complete-btn.is-completed {
+            background-color: #ff9500;
+            /* アプリらしい鮮やかなオレンジ */
+            box-shadow: 0 8px 16px rgba(255, 149, 0, 0.35);
+            /* 影もオレンジがからせる */
+        }
+
+        .complete-btn.is-completed:active {
+            transform: scale(0.97);
+            /* 達成後は少しだけ沈むように調整 */
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- スマホサイズのプレビュー枠 -->
+    <div class="mobile-container">
+        <!-- 1. 画面中央の目標 -->
+        <div class="goal-text">今日の目標：筋トレ10分</div>
+
+        <!-- 2. 高さ60px、グレーの完了ボタン -->
+        <button id="completeBtn" class="complete-btn">完了</button>
+    </div>
+
+    <script>
+        // 3. ボタンの動作を制御するJavaScript
+        const btn = document.getElementById('completeBtn');
+
+        btn.addEventListener('click', () => {
+            // まだ達成済みでなければ処理を実行
+            if (!btn.classList.contains('is-completed')) {
+                // ボタンの色をオレンジにするためのクラスを付与
+                btn.classList.add('is-completed');
+
+                // テキストを「達成済み！」に変更
+                btn.textContent = '達成済み！';
+
+                // オプション: スマホのバイブレーション機能(Haptic Feedback)を呼び出す(対応端末のみ)
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
