@@ -10,7 +10,6 @@
             background-color: #ffffff;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
@@ -19,7 +18,20 @@
             box-sizing: border-box;
         }
 
-        /* 中央のテキスト */
+        /* ---------------------------
+           上部エリア (テキストとボタン)
+           --------------------------- */
+        .top-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            /* スマホ操作で中央に押し上げるためのマージン */
+            margin-bottom: 24px;
+        }
+
         .goal-text {
             font-size: 22px;
             font-weight: 700;
@@ -29,11 +41,9 @@
             line-height: 1.4;
         }
 
-        /* 完了ボタン (高さ60px, グレー) */
         .complete-btn {
             width: 100%;
             max-width: 327px;
-            /* スマホ画面想定（横幅375pxから左右の余白を引いたサイズ） */
             height: 60px;
             background-color: #8e8e93;
             color: #ffffff;
@@ -55,7 +65,6 @@
             box-shadow: 0 2px 6px rgba(142, 142, 147, 0.3);
         }
 
-        /* 達成済み状態 (オレンジ) */
         .complete-btn.is-completed {
             background-color: #ff9500;
             box-shadow: 0 8px 16px rgba(255, 149, 0, 0.35);
@@ -64,33 +73,256 @@
         .complete-btn.is-completed:active {
             transform: scale(0.97);
         }
+
+        /* ---------------------------
+           下部エリア (カレンダー)
+           --------------------------- */
+        .calendar-section {
+            width: 100%;
+            max-width: 327px;
+            padding-bottom: 24px;
+        }
+
+        .calendar-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1c1c1e;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+
+        .day-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8e8e93;
+            margin-bottom: 8px;
+        }
+
+        .day-cell {
+            position: relative;
+            /* widthに対して高さを揃えて正方形を保つ */
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1c1c1e;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .day-cell.today {
+            font-weight: 700;
+            color: #ff9500;
+            background-color: rgba(255, 149, 0, 0.1);
+        }
+
+        /* ★マークのスタイル */
+        .day-cell .star-mark {
+            display: none;
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            color: #ff9500;
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+            /* ★が出る時のアニメーション */
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 完了状態（.completed）が追加されたら★を表示 */
+        .day-cell.completed .star-mark {
+            display: block;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0) rotate(-45deg);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <!-- 1. 画面中央の目標 -->
-    <div class="goal-text">今日の目標：筋トレ10分</div>
+    <div class="top-section">
+        <!-- 1. 画面中央の目標 -->
+        <div class="goal-text">今日の目標：筋トレ10分</div>
 
-    <!-- 2. 高さ60px、グレーの完了ボタン -->
-    <button id="completeBtn" class="complete-btn">完了</button>
+        <!-- 2. 高さ60px、グレーの完了ボタン -->
+        <button id="completeBtn" class="complete-btn">完了</button>
+    </div>
+
+    <!-- カレンダー表示エリア -->
+    <div class="calendar-section">
+        <div class="calendar-header" id="calendarHeader"></div>
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- 曜日ヘッダー -->
+            <div class="day-name">日</div>
+            <div class="day-name">月</div>
+            <div class="day-name">火</div>
+            <div class="day-name">水</div>
+            <div class="day-name">木</div>
+            <div class="day-name">金</div>
+            <div class="day-name">土</div>
+            <!-- この下に日付セルがJSで自動生成される -->
+        </div>
+    </div>
+
 
     <!-- canvas-confetti ライブラリの読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script>
-        // 3. ボタンの動作を制御するJavaScript
+        // --- データ管理（LocalStorage） ---
+        const STORAGE_KEY = 'habitCompletedDates';
+
+        // 保存されている日付配列を取得（YYYY-MM-DD のリスト）
+        function getCompletedDates() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        // 今日の日付を YYYY-MM-DD 形式で取得
+        function getTodayString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 特定の日付を保存
+        function saveDate(dateStr) {
+            const dates = getCompletedDates();
+            if (!dates.includes(dateStr)) {
+                dates.push(dateStr);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
+            }
+        }
+
+        const todayStr = getTodayString();
+        const completedDates = getCompletedDates();
+
+        // --- カレンダーの自動生成処理 ---
+        function generateCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+
+            // ヘッダーに「年月」を表示
+            document.getElementById('calendarHeader').textContent = `${year}年 ${month + 1}月`;
+
+            // 今月の1日と末日を取得
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            const startDayOfWeek = firstDay.getDay(); // 曜日のインデックス (0=日, 1=月...)
+            const totalDays = lastDay.getDate();
+
+            const calendarGrid = document.getElementById('calendarGrid');
+
+            // 既存の曜日ヘッダー以外をクリア
+            calendarGrid.innerHTML = `
+                <div class="day-name">日</div>
+                <div class="day-name">月</div>
+                <div class="day-name">火</div>
+                <div class="day-name">水</div>
+                <div class="day-name">木</div>
+                <div class="day-name">金</div>
+                <div class="day-name">土</div>
+            `;
+
+            // 1日の前の空白セルを埋める
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day-cell empty';
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // 日付セルを順に作成して追加
+            for (let d = 1; d <= totalDays; d++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'day-cell';
+                dayCell.textContent = d;
+
+                // ★マーク用の要素（最初は非表示）を作成
+                const star = document.createElement('span');
+                star.className = 'star-mark';
+                star.textContent = '★';
+                dayCell.appendChild(star);
+
+                // 日付から YYYY-MM-DD 文字列を作成
+                const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+                // ローカルストレージに保存されている日付なら★を表示
+                if (completedDates.includes(dStr)) {
+                    dayCell.classList.add('completed');
+                }
+
+                // 今日の日付なら特別なクラス(today)とIDを付与
+                if (d === today) {
+                    dayCell.classList.add('today');
+                    dayCell.id = 'todayCell';
+                }
+
+                calendarGrid.appendChild(dayCell);
+            }
+        }
+
+        // ページ読み込み時にカレンダーを描画
+        generateCalendar();
+
+
+        // --- ボタンの動作を制御するJavaScript ---
         const btn = document.getElementById('completeBtn');
+
+        // ロード時：今日の日付が保存データに含まれている場合のみ「達成済み」にする
+        // それ以外（翌日以降）はHTMLの初期状態（未達成のグレー）のままになる
+        if (completedDates.includes(todayStr)) {
+            btn.classList.add('is-completed');
+            btn.textContent = '達成済み！';
+        } else {
+            // 念のため初期状態を明示的にリセット（日付変更後を考慮）
+            btn.classList.remove('is-completed');
+            btn.textContent = '完了';
+        }
 
         btn.addEventListener('click', () => {
             if (!btn.classList.contains('is-completed')) {
+                // ボタンをオレンジ色にし、テキストを変更
                 btn.classList.add('is-completed');
                 btn.textContent = '達成済み！';
+
+                // --------- LocalStorage に今日の日付を保存 ---------
+                saveDate(todayStr);
 
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
                 }
 
-                // 派手な紙吹雪アニメーション（3秒間）
+                // --------- カレンダーに★をつける処理 ---------
+                const todayCell = document.getElementById('todayCell');
+                if (todayCell) {
+                    // ★アニメーションを発火
+                    todayCell.classList.add('completed');
+                }
+
+                // --------- 派手な紙吹雪アニメーション ---------
                 const duration = 3000;
                 const end = Date.now() + duration;
 
