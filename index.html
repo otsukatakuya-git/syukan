@@ -75,6 +75,8 @@
     <!-- 2. 高さ60px、グレーの完了ボタン -->
     <button id="completeBtn" class="complete-btn">完了</button>
 
+    <!-- canvas-confetti ライブラリの読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script>
         // 3. ボタンの動作を制御するJavaScript
         const btn = document.getElementById('completeBtn');
@@ -87,6 +89,33 @@
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
                 }
+
+                // 派手な紙吹雪アニメーション（3秒間）
+                const duration = 3000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    // 左端から
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#ff9500', '#ffcc00', '#ff3b30', '#4cd964', '#5ac8fa', '#007aff', '#5856d6']
+                    });
+                    // 右端から
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#ff9500', '#ffcc00', '#ff3b30', '#4cd964', '#5ac8fa', '#007aff', '#5856d6']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
             }
         });
     </script>
